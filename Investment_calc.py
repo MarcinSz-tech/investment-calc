@@ -24,32 +24,65 @@ def calculate_return_on_investment(investment, location, bedrooms, income_data):
     }
     return result
 
-# Data setup
+def calculate_required_nightly_rate(take_home, mgmt_fee, guest_clean_fee, client_clean_fee, linen_charge):
+    extra_cleaning_cost = (client_clean_fee + linen_charge) - guest_clean_fee
+    if extra_cleaning_cost > 0:
+        take_home += extra_cleaning_cost * 7
+
+    fee_multipliers = {
+        10: 100 / 69,
+        15: 100 / 64,
+        17: 100 / 60,
+        18: 100 / 59
+    }
+
+    if mgmt_fee not in fee_multipliers:
+        return None, "Invalid management fee. Please choose from 10, 15, 17, or 18."
+
+    average_nightly_rate = take_home * fee_multipliers[mgmt_fee] / 21
+    return average_nightly_rate, None
+
+# Data taken from Excel
 data = {
     'Bedrooms': ['Studio', '1', '2', '3', '4'],
     'City Centre (£)': [1445, 1500, 1703, 4200, 5131],
     'West End (£)': [1083.75, 1125.00, 1299.00, 3163.00, 3848.25],
 }
+
 df = pd.DataFrame(data)
 
-st.title("Property Investment Return Calculator")
+# Streamlit UI
+st.title("Property Investment Calculator")
 
-# User inputs
-investment_input = st.number_input("Enter your investment amount in £:", min_value=0.0, value=100000.0, step=1000.0, format="%.2f")
+investment_input = st.number_input("Enter your investment amount in £:", min_value=0.0, step=1000.0)
+location_input = st.selectbox("Select the location:", ['City Centre', 'West End'])
+bedrooms_input = st.selectbox("Select the number of bedrooms:", ['Studio', '1', '2', '3', '4'])
 
-location_input = st.selectbox("Select the location:", options=['City Centre', 'West End'])
-
-bedrooms_input = st.selectbox("Select the number of bedrooms:", options=['Studio', '1', '2', '3', '4'])
-
-if investment_input > 0:
-    # Calculate result
+if st.button("Calculate"):
     result = calculate_return_on_investment(investment_input, location_input, bedrooms_input, df)
 
-    # Display result
-    st.markdown("### Investment Analysis Result")
-    st.write(f"**{result['Bedrooms']} bed in {result['Location']}**")
-    st.write(f"- Average Monthly Income After All Fees: £{result['Average Monthly Income After All Fees (£)']:.2f}")
-    st.write(f"- Yield: {result['Yield (%)']}%")
-    st.write(f"- Years to Return Investment: {result['Years to Return']}")
-else:
-    st.warning("Please enter a valid investment amount.")
+    st.subheader("Investment Analysis Result")
+    st.markdown(f"**{result['Bedrooms']} bed in {result['Location']}**")
+    st.markdown(f"- Average Monthly Income After All Fees: £{result['Average Monthly Income After All Fees (£)']:.2f}")
+    st.markdown(f"- Yield: {result['Yield (%)']}%")
+    st.markdown(f"- Years to Return Investment: {result['Years to Return']}")
+
+    # Additional input for nightly rate reverse calculator
+    st.subheader("Required Nightly Rate to Achieve This Income")
+    mgmt_fee = st.selectbox("Select management fee %:", [10, 15, 17, 18])
+    guest_clean_fee = st.number_input("Cleaning fee paid by guest (£):", min_value=0.0, step=1.0)
+    client_clean_fee = st.number_input("Cleaning fee paid by client (with VAT) (£):", min_value=0.0, step=1.0)
+    linen_charge = st.number_input("Linen charge per clean (with VAT) (£):", min_value=0.0, step=1.0)
+
+    nightly_rate, error = calculate_required_nightly_rate(
+        result['Average Monthly Income After All Fees (£)'],
+        mgmt_fee,
+        guest_clean_fee,
+        client_clean_fee,
+        linen_charge
+    )
+
+    if error:
+        st.error(error)
+    else:
+        st.markdown(f"To achieve an average monthly income of £{result['Average Monthly Income After All Fees (£)']:.2f}, your average nightly rate should be: **£{nightly_rate:.2f}**")
