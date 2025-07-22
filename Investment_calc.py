@@ -69,20 +69,23 @@ if st.button("Calculate"):
 
     # Additional input for nightly rate reverse calculator
     st.subheader("Required Nightly Rate to Achieve This Income")
-    mgmt_fee = st.selectbox("Select management fee %:", [10, 15, 17, 18])
-    guest_clean_fee = st.number_input("Cleaning fee paid by guest (£):", min_value=0.0, step=1.0)
-    client_clean_fee = st.number_input("Cleaning fee paid by client (with VAT) (£):", min_value=0.0, step=1.0)
-    linen_charge = st.number_input("Linen charge per clean (with VAT) (£):", min_value=0.0, step=1.0)
+    with st.form("nightly_rate_form"):
+        mgmt_fee = st.selectbox("Select management fee %:", [10, 15, 17, 18])
+        guest_clean_fee = st.number_input("Cleaning fee paid by guest (£):", min_value=0.0, step=1.0)
+        client_clean_fee = st.number_input("Cleaning fee paid by client (with VAT) (£):", min_value=0.0, step=1.0)
+        linen_charge = st.number_input("Linen charge per clean (with VAT) (£):", min_value=0.0, step=1.0)
+        submit = st.form_submit_button("Calculate Required Nightly Rate")
 
-    nightly_rate, error = calculate_required_nightly_rate(
-        result['Average Monthly Income After All Fees (£)'],
-        mgmt_fee,
-        guest_clean_fee,
-        client_clean_fee,
-        linen_charge
-    )
+    if submit:
+        nightly_rate, error = calculate_required_nightly_rate(
+            result['Average Monthly Income After All Fees (£)'],
+            mgmt_fee,
+            guest_clean_fee,
+            client_clean_fee,
+            linen_charge
+        )
 
-    if error:
-        st.error(error)
-    else:
-        st.markdown(f"To achieve an average monthly income of £{result['Average Monthly Income After All Fees (£)']:.2f}, your average nightly rate should be: **£{nightly_rate:.2f}**")
+        if error:
+            st.error(error)
+        else:
+            st.markdown(f"To achieve an average monthly income of £{result['Average Monthly Income After All Fees (£)']:.2f}, your average nightly rate should be: **£{nightly_rate:.2f}**")
