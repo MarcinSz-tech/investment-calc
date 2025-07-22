@@ -20,23 +20,26 @@ def calculate_return_on_investment(investment, location, bedrooms, income_data):
     }
 
 def calculate_required_nightly_rate(take_home, mgmt_fee, guest_clean_fee, client_clean_fee, linen_charge):
+    fee_multipliers = {
+        10: 100 / 69,
+        15: 100 / 64,
+        17: 100 / 60,
+        18: 100 / 59
+    }
+
+    if mgmt_fee not in fee_multipliers:
+        return None, "Invalid management fee. Please choose from 10, 15, 17, or 18."
+
+    extra_cleaning_cost = (client_clean_fee + linen_charge) - guest_clean_fee
+    adjusted_take_home = take_home + extra_cleaning_cost * 7 if extra_cleaning_cost > 0 else take_home
+
     try:
-        fee_multipliers = {
-            10: 100 / 69,
-            15: 100 / 64,
-            17: 100 / 60,
-            18: 100 / 59
-        }
-
-        if mgmt_fee not in fee_multipliers:
-            return None, "Invalid management fee. Please choose from 10, 15, 17, or 18."
-
-        extra_cleaning_cost = (client_clean_fee + linen_charge) - guest_clean_fee
-        adjusted_take_home = take_home + extra_cleaning_cost * 7 if extra_cleaning_cost > 0 else take_home
         average_nightly_rate = adjusted_take_home * fee_multipliers[mgmt_fee] / 21
         return average_nightly_rate, None
+    except ZeroDivisionError:
+        return None, "Nightly rate calculation failed due to division by zero."
     except Exception as e:
-        return None, f"An error occurred during calculation: {e}"
+        return None, f"Unexpected error during nightly rate calculation: {e}"
 
 # Data from Excel
 data = {
@@ -69,16 +72,16 @@ if st.button("Calculate"):
         linen_charge = st.number_input("Linen charge per clean (with VAT) (£):", min_value=0.0, step=1.0, key="linen")
         submit = st.form_submit_button("Calculate Required Nightly Rate")
 
-    if submit:
-        nightly_rate, error = calculate_required_nightly_rate(
-            result['Average Monthly Income After All Fees (£)'],
-            mgmt_fee,
-            guest_clean_fee,
-            client_clean_fee,
-            linen_charge
-        )
+        if submit:
+            nightly_rate, error = calculate_required_nightly_rate(
+                result['Average Monthly Income After All Fees (£)'],
+                mgmt_fee,
+                guest_clean_fee,
+                client_clean_fee,
+                linen_charge
+            )
 
-        if error:
-            st.error(error)
-        else:
-            st.markdown(f"To achieve an average monthly income of £{result['Average Monthly Income After All Fees (£)']:.2f}, your average nightly rate should be: **£{nightly_rate:.2f}**")
+            if error:
+                st.error(error)
+            else:
+                st.markdown(f"To achieve an average monthly income of £{result['Average Monthly Income After All Fees (£)']:.2f}, your average nightly rate should be: **£{nightly_rate:.2f}**")
