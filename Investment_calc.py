@@ -1,4 +1,4 @@
-if "investment_result" in st.session_state:
+if st.session_state.get("investment_result"):
     result = st.session_state["investment_result"]
 
     st.subheader("Investment Analysis Result")
