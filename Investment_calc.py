@@ -29,6 +29,7 @@ def calculate_required_nightly_rate(take_home, mgmt_fee, guest_clean_fee, client
     }
     if mgmt_fee not in fee_multipliers:
         return None, "Invalid management fee. Please choose from 10, 15, 17, or 18."
+
     extra_cleaning_cost = (client_clean_fee + linen_charge) - guest_clean_fee
     adjusted_take_home = take_home + extra_cleaning_cost * 7 if extra_cleaning_cost > 0 else take_home
     average_nightly_rate = adjusted_take_home * fee_multipliers[mgmt_fee] / 21
@@ -46,7 +47,8 @@ df = pd.DataFrame(data)
 st.set_page_config(page_title="Property Investment Calculator", layout="centered")
 st.title("🏠 Property Investment Calculator")
 
-# --- User Inputs for Investment ---
+# --- Section 1: Investment Return Calculator ---
+st.header("📈 Investment Return")
 investment_input = st.number_input("Enter your investment amount in £:", min_value=0.0, step=1000.0)
 location_input = st.selectbox("Select the location:", ['City Centre', 'West End'])
 bedrooms_input = st.selectbox("Select the number of bedrooms:", ['Studio', '1', '2', '3', '4'])
@@ -56,7 +58,6 @@ if st.button("🔍 Calculate Investment Return"):
         investment_input, location_input, bedrooms_input, df
     )
 
-# --- Show Investment Result ---
 if st.session_state.get("investment_result"):
     result = st.session_state["investment_result"]
     st.subheader("📊 Investment Analysis Result")
@@ -65,29 +66,31 @@ if st.session_state.get("investment_result"):
     st.markdown(f"- **Yield**: {result['Yield (%)']}%")
     st.markdown(f"- **Years to Return Investment**: {result['Years to Return']}")
 
-    # --- Revised Required Nightly Rate Calculator ---
-    st.subheader("💷 Required Nightly Rate to Achieve Your Desired Income")
-    with st.form("nightly_rate_form"):
-        take_home_input = st.number_input(
-            "Enter your **desired monthly take‑home pay** (£):",
-            min_value=0.0,
-            step=50.0,
-            help="This is the net rent you want to pocket each month after all fees."
-        )
-        mgmt_fee = st.selectbox("Select management fee %:", [10, 15, 17, 18])
-        guest_clean_fee = st.number_input("Cleaning fee paid by guest (£):", min_value=0.0, step=1.0)
-        client_clean_fee = st.number_input("Cleaning fee paid by owner (with VAT) (£):", min_value=0.0, step=1.0)
-        linen_charge = st.number_input("Linen charge per clean (with VAT) (£):", min_value=0.0, step=1.0)
-        submit = st.form_submit_button("Calculate Required Nightly Rate")
+# --- Section 2: Nightly Rate Calculator ---
+st.header("💷 Required Nightly Rate Calculator")
+st.markdown("Enter your **desired monthly take-home pay**, and we'll calculate the nightly rate you need to charge.")
 
-    if submit:
-        nightly_rate, error = calculate_required_nightly_rate(
-            take_home_input, mgmt_fee, guest_clean_fee, client_clean_fee, linen_charge
+with st.form("nightly_rate_form"):
+    take_home_input = st.number_input(
+        "Enter your **desired monthly take-home pay** (£):",
+        min_value=0.0,
+        step=50.0,
+        help="This is the net rent you want to pocket each month after all fees."
+    )
+    mgmt_fee = st.selectbox("Select management fee %:", [10, 15, 17, 18])
+    guest_clean_fee = st.number_input("Cleaning fee paid by guest (£):", min_value=0.0, step=1.0)
+    client_clean_fee = st.number_input("Cleaning fee paid by owner (with VAT) (£):", min_value=0.0, step=1.0)
+    linen_charge = st.number_input("Linen charge per clean (with VAT) (£):", min_value=0.0, step=1.0)
+    submit = st.form_submit_button("Calculate Required Nightly Rate")
+
+if submit:
+    nightly_rate, error = calculate_required_nightly_rate(
+        take_home_input, mgmt_fee, guest_clean_fee, client_clean_fee, linen_charge
+    )
+    if error:
+        st.error(error)
+    else:
+        st.success(
+            f"✅ To pocket £{take_home_input:.2f} per month, "
+            f"you need an **average nightly rate of £{nightly_rate:.2f}**."
         )
-        if error:
-            st.error(error)
-        else:
-            st.success(
-                f"✅ To pocket £{take_home_input:.2f} per month, "
-                f"you need an **average nightly rate of £{nightly_rate:.2f}**."
-            )
