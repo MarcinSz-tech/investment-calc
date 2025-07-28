@@ -94,3 +94,46 @@ if submit:
             f"✅ To pocket £{take_home_input:.2f} per month, "
             f"you need an **average nightly rate of £{nightly_rate:.2f}**."
         )
+
+# --- Section 3: Live What-If Calculator with Sliders ---
+st.header("🎛️ What-If: Interactive Nightly Rate Estimator")
+
+st.markdown("Adjust the sliders below to instantly see what nightly rate you'd need to achieve your target income.")
+
+col1, col2 = st.columns(2)
+with col1:
+    take_home_slider = st.slider(
+        "Desired monthly take-home pay (£):",
+        min_value=500,
+        max_value=4000,
+        step=50,
+        value=2000
+    )
+with col2:
+    mgmt_fee_slider = st.select_slider(
+        "Management fee (%):",
+        options=[10, 15, 17, 18],
+        value=15
+    )
+
+st.markdown("#### Cleaning & Linen Fees")
+guest_clean_fee_slider = st.number_input("Cleaning fee paid by guest (£):", min_value=0.0, step=1.0, value=50.0)
+client_clean_fee_slider = st.number_input("Cleaning fee paid by owner (with VAT) (£):", min_value=0.0, step=1.0, value=70.0)
+linen_charge_slider = st.number_input("Linen charge per clean (with VAT) (£):", min_value=0.0, step=1.0, value=20.0)
+
+# --- Live Calculation ---
+nightly_rate_slider, error_slider = calculate_required_nightly_rate(
+    take_home_slider,
+    mgmt_fee_slider,
+    guest_clean_fee_slider,
+    client_clean_fee_slider,
+    linen_charge_slider
+)
+
+if error_slider:
+    st.error(error_slider)
+else:
+    st.success(
+        f"To take home £{take_home_slider:.2f} with a {mgmt_fee_slider}% management fee, "
+        f"you need an average nightly rate of **£{nightly_rate_slider:.2f}**."
+    )
